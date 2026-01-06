@@ -1,0 +1,73 @@
+import { model, Schema, Document } from "mongoose";
+import { IIssue } from "../utils/issue";
+import { ILocation } from "../utils/location";
+
+const locationSchema = new Schema<ILocation>(
+  {
+    latitude: { type: Number, required: true, min: -90, max: 90 },
+    longitude: { type: Number, required: true, min: -180, max: 180 },
+    address: String,
+  },
+  { _id: false }
+);
+
+const IssueSchema = new Schema<IIssue & Document>(
+  {
+    citizenId: {
+      type: Schema.Types.ObjectId,
+      ref: "Citizen",
+      required: true,
+    },
+    issueType: {
+      type: String,
+      enum: [
+        "Road Infrastructure",
+        "Waste Management",
+        "Environmental Issues",
+        "Utilities & Infrastructure",
+        "Public Safety",
+        "Other",
+      ],
+      default: "Road Infrastructure",
+      required: true,
+    },
+    title: {
+      type: String,
+      required: true,
+      maxlength: 100,
+      minlength: 5,
+    },
+    // escalationLevel: 1 for initial admin, 2 for higher level admin
+    escalationLevel: { type: Number, default: 1 },
+    escalatedTo: { type: Schema.Types.ObjectId, ref: "Admin", default: null },
+    description: {
+      type: String,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ["Reported", "In Progress", "Resolved", "Rejected", "Pending"],
+      default: "Reported",
+    },
+    location: {
+      type: locationSchema,
+      required: true,
+    },
+    media: {
+      type: Schema.Types.ObjectId,
+      ref: "Multimedia",
+    },
+    reportCount: { type: Number, default: 1 },
+    reporters: [{ type: Schema.Types.ObjectId, ref: "Citizen" }],
+    handledBy: {
+      type: Schema.Types.ObjectId,
+      ref: "Admin",
+    },
+  },
+  { timestamps: true }
+);
+
+export const LocationModel = model("Location", locationSchema);
+
+export interface IssueDocument extends IIssue, Document {}
+export const IssueModel = model<IssueDocument>("Issue", IssueSchema);
